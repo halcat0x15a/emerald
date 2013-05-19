@@ -1,5 +1,7 @@
 # Emerald
 
+[![Build Status](https://travis-ci.org/halcat0x15a/emerald.png?branch=master)](https://travis-ci.org/halcat0x15a/emerald)
+
 Protocol based Monad library
 
 ## Usage
@@ -18,7 +20,7 @@ Protocol based Monad library
        [a b])
 
 ;; Identity Monad and Maybe Monad
-(for-m ->Identity
+(for-m m/->Identity
        [a ([1 2 3] 0)
         b ({:foo 2 :bar 3} :baz)
         :if (< a b)]
