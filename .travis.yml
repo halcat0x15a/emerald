@@ -1,0 +1,2 @@
+language: clojure
+script: lein run -m clojure.test.generative.runner test

@@ -63,5 +63,3 @@
   [^{:tag `monad-ctx} m]
   (is (= % (with-m (:monad m)
              (bind (bind (point (:value m)) point) point)))))
-
-(runner/-main "test")
