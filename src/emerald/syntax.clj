@@ -1,6 +1,16 @@
 (ns emerald.syntax
   (:require [emerald.monad :refer :all]))
 
+(extend-type java.lang.Object
+  Functor
+  (fmap [m f] (fmap (point m) f))
+  Monad
+  (bind [m f] (bind (point m) f))
+  MonadPlus
+  (mfilter [m p] (mfilter (point m) p))
+  Comonad
+  (extract [m] m))
+
 (extend-type clojure.lang.IPersistentCollection
   Functor
   (fmap [m f] (map f m))
@@ -9,14 +19,12 @@
   MonadPlus
   (mfilter [m p] (filter p m)))
 
+(defmacro with-m [m body]
+  `(binding [*monad* ~m]
+     (extract ~body)))
+
 (defmacro for-m
-  ([m exprs expr]
-     (let [bindings
-           (mapcat (fn [[var val :as binding]]
-                     (if (keyword? var) binding [var `(point ~val)]))
-                   (partition 2 exprs))]
-       `(binding [*monad* ~m]
-          (extract (for-m ~bindings ~expr)))))
+  ([m exprs expr] `(with-m ~m (for-m ~exprs ~expr)))
   ([[var val & exprs] expr]
      (let [[key expr' & exprs'] exprs]
        (cond (identical? key :if)

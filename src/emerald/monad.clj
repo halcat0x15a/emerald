@@ -31,15 +31,15 @@
   Comonad
   (extract [m] value))
 
-(deftype Maybe [value]
+(extend-type nil
   Functor
-  (fmap [m f] (Maybe. (f value)))
+  (fmap [m f] m)
   Monad
-  (bind [m f] (if-not (nil? value) (f value) m))
+  (bind [m f] m)
   MonadPlus
-  (mfilter [m p] (bind m (fn [a] (if (p a) m (Maybe. nil)))))
+  (mfilter [m p] m)
   Comonad
-  (extract [m] value))
+  (extract [m] m))
 
 (defrecord Right [value]
   Functor

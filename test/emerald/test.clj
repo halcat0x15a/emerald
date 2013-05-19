@@ -6,17 +6,19 @@
             [emerald.syntax :refer :all]))
 
 (defn monad []
-  (gen/rand-nth ((juxt ->Right ->Left gen/list gen/vec) gen/anything)))
+  (gen/rand-nth
+   ((juxt ->Right
+          ->Left
+          gen/list
+          gen/vec
+          (constantly nil))
+    (gen/anything))))
 
 (defrecord Context [monad value])
 
 (defn monad-ctx []
   (gen/rand-nth
-   [(Context. ->Identity (gen/anything))
-    (Context. ->Maybe (loop [value (gen/anything)]
-                        (if (nil? value)
-                          (recur (gen/anything))
-                          value)))]))
+   [(Context. ->Identity (gen/anything))]))
 
 (defn function []
   (gen/rand-nth [identity (constantly (gen/anything))]))
@@ -27,7 +29,8 @@
   (is (= % m)))
 
 (defspec id-ctx
-  (fn [{:keys [monad value]}] (for-m monad [x value] x))
+  (fn [{:keys [monad value]}]
+    (with-m monad (fmap (point value) identity)))
   [^{:tag `monad-ctx} m]
   (is (= % (:value m))))
 
@@ -38,30 +41,27 @@
 
 (defspec compose-ctx
   (fn [{:keys [monad value]} f g]
-    (for-m monad [x (for-m monad [x value] (g x))] (f x)))
+    (with-m monad ((comp #(fmap % f) #(fmap % g)) (point value))))
   [^{:tag `monad-ctx} m ^{:tag `function} f ^{:tag `function} g]
-  (is (= % (for-m (:monad m) [x (:value m)] (f (g x))))))
+  (is (= % (with-m (:monad m) (fmap (point (:value m)) (comp f g))))))
 
 (defspec left-unit
   (fn [{:keys [monad value]} f]
-    (binding [*monad* monad]
-      (extract (bind (point value) (comp point f)))))
+    (with-m monad (bind (point value) (comp point f))))
   [^{:tag `monad-ctx} m ^{:tag `function} f]
   (is (= % (f (:value m)))))
 
 (defspec right-unit
   (fn [{:keys [monad value]}]
-    (binding [*monad* monad]
-      (extract (bind (point value) point))))
+    (with-m monad (bind (point value) point)))
   [^{:tag `monad-ctx} m]
   (is (= % (:value m))))
 
 (defspec associative
   (fn [{:keys [monad value]}]
-    (binding [*monad* monad]
-      (= (extract (bind (bind (point value) point) point))
-         (extract (bind (point value) #(bind (point %) point))))))
+    (with-m monad (bind (point value) #(bind (point %) point))))
   [^{:tag `monad-ctx} m]
-  (is %))
+  (is (= % (with-m (:monad m)
+             (bind (bind (point (:value m)) point) point)))))
 
 (runner/-main "test")
