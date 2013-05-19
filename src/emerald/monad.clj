@@ -1,6 +1,6 @@
 (ns emerald.monad)
 
-(def ^:dynamic *monad* identity)
+(def ^:dynamic *monad*)
 
 (defn point [x] (*monad* x))
 
@@ -27,26 +27,27 @@
 
 (deftype Identity [value]
   Monad
-  (bind [m f]
-    (f value))
+  (bind [m f] (f value))
   Comonad
   (extract [m] value))
 
 (deftype Maybe [value]
+  Functor
+  (fmap [m f] (Maybe. (f value)))
   Monad
   (bind [m f] (if-not (nil? value) (f value) m))
   MonadPlus
-  (mfilter [m p] (if (p value) value))
+  (mfilter [m p] (bind m (fn [a] (if (p a) m (Maybe. nil)))))
   Comonad
   (extract [m] value))
 
-(deftype Right [value]
+(defrecord Right [value]
   Functor
   (fmap [m f] (Right. (f value)))
   Monad
   (bind [m f] (f value)))
 
-(deftype Left [value]
+(defrecord Left [value]
   Functor
   (fmap [m f] m)
   Monad

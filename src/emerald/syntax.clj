@@ -11,12 +11,16 @@
 
 (defmacro for-m
   ([m exprs expr]
-     `(binding [*monad* #(new ~m %)]
-        (extract (for-m ~exprs ~expr))))
+     (let [bindings
+           (mapcat (fn [[var val :as binding]]
+                     (if (keyword? var) binding [var `(point ~val)]))
+                   (partition 2 exprs))]
+       `(binding [*monad* ~m]
+          (extract (for-m ~bindings ~expr)))))
   ([[var val & exprs] expr]
      (let [[key expr' & exprs'] exprs]
        (cond (identical? key :if)
-             `(for-m [~var (mfilter (point ~val) (fn [~var] ~expr'))
+             `(for-m [~var (mfilter ~val (fn [~var] ~expr'))
                       ~@exprs']
                      ~expr)
              (identical? key :let)
@@ -27,6 +31,6 @@
                         ~@exprs']
                        ~expr))
              (empty? exprs)
-             `(fmap (point ~val) (fn [~var] ~expr))
+             `(fmap ~val (fn [~var] ~expr))
              :else
-             `(bind (point ~val) (fn [~var] (for-m ~exprs ~expr)))))))
+             `(bind ~val (fn [~var] (for-m ~exprs ~expr)))))))
