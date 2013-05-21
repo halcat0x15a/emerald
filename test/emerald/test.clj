@@ -6,13 +6,17 @@
             [emerald.syntax :refer :all]))
 
 (defn mplus []
-  (gen/rand-nth [list (constantly nil)]))
+  (gen/rand-nth [(constantly nil) list]))
 
 (defn monad []
-  (gen/rand-nth [(mplus) ->Identity]))
+  (gen/rand-nth [->Identity (mplus)]))
 
 (defn functor []
-  (gen/rand-nth ((juxt gen/vec (monad)) (gen/anything))))
+  (gen/rand-nth
+   ((juxt vector (monad)) (gen/anything))))
+
+(defn comonad []
+  (gen/rand-nth [vector ->Identity]))
 
 (defn function []
   (gen/rand-nth [identity (constantly (gen/anything))]))
@@ -55,3 +59,8 @@
      (mfilter (m a) (constantly false))])
   [^{:tag `mplus} m ^anything a ^{:tag `function} f]
   (is (apply = %)))
+
+(defspec dual
+  (fn [m a] (extract (m a)))
+  [^{:tag `comonad} m ^anything a]
+  (is (= % a)))

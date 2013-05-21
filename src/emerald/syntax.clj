@@ -21,7 +21,9 @@
 
 (extend-type clojure.lang.IPersistentVector
   Functor
-  (fmap [m f] (if (empty? m) m (conj (pop m) (f (peek m))))))
+  (fmap [m f] (conj (pop m) (f (peek m))))
+  Comonad
+  (extract [m] (peek m)))
 
 (defmacro with-m [m body]
   `(binding [*monad* ~m]
