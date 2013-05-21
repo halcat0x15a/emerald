@@ -5,61 +5,53 @@
             [emerald.monad :refer :all]
             [emerald.syntax :refer :all]))
 
+(defn mplus []
+  (gen/rand-nth [list (constantly nil)]))
+
 (defn monad []
-  (gen/rand-nth
-   ((juxt ->Right
-          ->Left
-          gen/list
-          gen/vec
-          (constantly nil))
-    (gen/anything))))
+  (gen/rand-nth [(mplus) ->Identity]))
 
-(defrecord Context [monad value])
-
-(defn monad-ctx []
-  (gen/rand-nth
-   [(Context. ->Identity (gen/anything))]))
+(defn functor []
+  (gen/rand-nth ((juxt gen/vec (monad)) (gen/anything))))
 
 (defn function []
   (gen/rand-nth [identity (constantly (gen/anything))]))
 
 (defspec id
   (fn [m] (fmap m identity))
-  [^{:tag `monad} m]
+  [^{:tag `functor} m]
   (is (= % m)))
 
-(defspec id-ctx
-  (fn [{:keys [monad value]}]
-    (with-m monad (fmap (point value) identity)))
-  [^{:tag `monad-ctx} m]
-  (is (= % (:value m))))
-
 (defspec compose
-  (fn [m f g] ((comp #(fmap % f) #(fmap % g)) m))
-  [^{:tag `monad} m ^{:tag `function} f ^{:tag `function} g]
-  (is (= % (fmap m (comp f g)))))
+  (fn [m f g]
+    [(fmap m (comp f g))
+     ((comp #(fmap % f) #(fmap % g)) m)])
+  [^{:tag `functor} m ^{:tag `function} f ^{:tag `function} g]
+  (is (apply = %)))
 
-(defspec compose-ctx
-  (fn [{:keys [monad value]} f g]
-    (with-m monad ((comp #(fmap % f) #(fmap % g)) (point value))))
-  [^{:tag `monad-ctx} m ^{:tag `function} f ^{:tag `function} g]
-  (is (= % (with-m (:monad m) (fmap (point (:value m)) (comp f g))))))
+(defspec left
+  (fn [m a f]
+    [(bind (m a) (comp m f))
+     (m (f a))])
+  [^{:tag `monad} m ^anything a ^{:tag `function} f]
+  (is (apply = %)))
 
-(defspec left-unit
-  (fn [{:keys [monad value]} f]
-    (with-m monad (bind (point value) (comp point f))))
-  [^{:tag `monad-ctx} m ^{:tag `function} f]
-  (is (= % (f (:value m)))))
-
-(defspec right-unit
-  (fn [{:keys [monad value]}]
-    (with-m monad (bind (point value) point)))
-  [^{:tag `monad-ctx} m]
-  (is (= % (:value m))))
+(defspec right
+  (fn [m a] (bind (m a) m))
+  [^{:tag `monad} m ^anything a]
+  (is (= % (m a))))
 
 (defspec associative
-  (fn [{:keys [monad value]}]
-    (with-m monad (bind (point value) #(bind (point %) point))))
-  [^{:tag `monad-ctx} m]
-  (is (= % (with-m (:monad m)
-             (bind (bind (point (:value m)) point) point)))))
+  (fn [m a f g]
+    [(bind (m a) #(bind (m (f %)) (comp m g)))
+     (bind (bind (m a) (comp m f)) (comp m g))])
+  [^{:tag `monad} m ^anything a
+   ^{:tag `function} f ^{:tag `function} g]
+  (is (apply = %)))
+
+(defspec zero
+  (fn [m a f]
+    [(bind (mfilter (m a) (constantly false)) (comp m f))
+     (mfilter (m a) (constantly false))])
+  [^{:tag `mplus} m ^anything a ^{:tag `function} f]
+  (is (apply = %)))

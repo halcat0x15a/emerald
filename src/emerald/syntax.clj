@@ -11,13 +11,17 @@
   Comonad
   (extract [m] m))
 
-(extend-type clojure.lang.IPersistentCollection
+(extend-type clojure.lang.ISeq
   Functor
   (fmap [m f] (map f m))
   Monad
   (bind [m f] (mapcat f m))
   MonadPlus
   (mfilter [m p] (filter p m)))
+
+(extend-type clojure.lang.IPersistentVector
+  Functor
+  (fmap [m f] (if (empty? m) m (conj (pop m) (f (peek m))))))
 
 (defmacro with-m [m body]
   `(binding [*monad* ~m]

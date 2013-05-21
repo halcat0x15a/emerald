@@ -25,7 +25,9 @@
 (defn bind' [m m'] (bind m (constantly m')))
 (defn join [m] (bind m identity))
 
-(deftype Identity [value]
+(defrecord Identity [value]
+  Functor
+  (fmap [m f] (bind m (comp ->Identity f)))
   Monad
   (bind [m f] (f value))
   Comonad
@@ -40,15 +42,3 @@
   (mfilter [m p] m)
   Comonad
   (extract [m] m))
-
-(defrecord Right [value]
-  Functor
-  (fmap [m f] (Right. (f value)))
-  Monad
-  (bind [m f] (f value)))
-
-(defrecord Left [value]
-  Functor
-  (fmap [m f] m)
-  Monad
-  (bind [m f] m))
