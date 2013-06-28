@@ -5,21 +5,23 @@
             [emerald.monad :refer :all]
             [emerald.syntax :refer :all]))
 
+(defn object []
+  (if-let [value (gen/scalar)]
+    value
+    (object)))
+
 (defn mplus []
   (gen/rand-nth [(constantly nil) list]))
 
 (defn monad []
-  (gen/rand-nth [->Identity (mplus)]))
+  (gen/rand-nth [(mplus) (constantly (object))]))
 
 (defn functor []
   (gen/rand-nth
    ((juxt vector (monad)) (gen/anything))))
 
-(defn comonad []
-  (gen/rand-nth [vector ->Identity]))
-
 (defn function []
-  (gen/rand-nth [identity (constantly (gen/anything))]))
+  (gen/rand-nth [identity (constantly (object))]))
 
 (defspec id
   (fn [m] (fmap m identity))
@@ -59,8 +61,3 @@
      (mfilter (m a) (constantly false))])
   [^{:tag `mplus} m ^anything a ^{:tag `function} f]
   (is (apply = %)))
-
-(defspec dual
-  (fn [m a] (extract (m a)))
-  [^{:tag `comonad} m ^anything a]
-  (is (= % a)))

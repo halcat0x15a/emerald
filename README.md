@@ -13,16 +13,14 @@ Protocol based Monad library
 (require '[emerald.syntax :refer [for-m]])
 
 ;; List Monad
-(for-m [a [1 2 3]
-        :let [b (inc a)]
-        b [2 4 6]
-        :if (< a b)]
+(for-m [a '(1 2 3)
+        :let [x (inc a)]
+        b '(2 4 6)
+        :if (even? x)]
        [a b])
 
-;; Identity Monad and Maybe Monad
-(for-m m/->Identity
-       [a ([1 2 3] 0)
-        b ({:foo 2 :bar 3} :baz)
-        :if (< a b)]
-       (+ a b))
+;; Identity and Maybe
+(do-m (let! a ([1 2 3] 0))
+      (let! b ({:foo 2 :bar 3} :baz))
+      (+ a b))
 ```
