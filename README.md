@@ -32,3 +32,12 @@ Protocol based Monad library
 (>>= '(1 2 3) (partial repeat 2))
 (>>= 0 inc inc (fn [x] (* x x)))
 ```
+
+### lift
+
+```clojure
+(require '[emerald.monad :refer [lift]])
+
+(lift + '(1 2 3) '(2 3 4))
+(lift + 1 2 nil 3)
+```

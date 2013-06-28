@@ -15,10 +15,6 @@
   MonadPlus
   (mfilter [m p] (filter p m)))
 
-(extend-type clojure.lang.IPersistentVector
-  Functor
-  (fmap [m f] (conj (pop m) (f (peek m)))))
-
 (defmacro with-m [m body]
   `(binding [*monad* ~m] ~body))
 

@@ -16,13 +16,19 @@
   Functor
   (fmap [m f] (bind m (comp point f))))
 
-(defn >>= [m & ms] (reduce bind m ms))
+(defn >>= [m & fs] (reduce bind m fs))
 
 (defn >>
-  ([m m'] (bind m (constantly m')))
-  ([m m' & ms] (reduce >> m (cons m' ms))))
+  ([m n] (bind m (constantly n)))
+  ([m n & ms] (reduce >> m (cons n ms))))
 
 (defn join [m] (bind m identity))
+
+(defn collect [m & ms]
+  (reduce (fn [m n] (bind m #(fmap n (partial conj %)))) (fmap m vector) ms))
+
+(defn lift [f m & ms]
+  (fmap (apply collect m ms) (partial apply f)))
 
 (defprotocol MonadPlus
   (mfilter [m p]))
