@@ -7,6 +7,8 @@
 (defprotocol Functor
   (fmap [m f]))
 
+(defn fmap' [m a] (fmap m (constantly a)))
+
 (defprotocol Monad
   (bind [m f]))
 
@@ -14,12 +16,16 @@
   Functor
   (fmap [m f] (bind m (comp point f))))
 
+(defn >>= [m & ms] (reduce bind m ms))
+
+(defn >>
+  ([m m'] (bind m (constantly m')))
+  ([m m' & ms] (reduce >> m (cons m' ms))))
+
+(defn join [m] (bind m identity))
+
 (defprotocol MonadPlus
   (mfilter [m p]))
-
-(defn fmap' [m a] (fmap m (constantly a)))
-(defn bind' [m m'] (bind m (constantly m')))
-(defn join [m] (bind m identity))
 
 (extend-type nil
   Functor

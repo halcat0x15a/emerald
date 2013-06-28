@@ -39,13 +39,3 @@
           `(fmap ~val (fn [~var] ~expr))
           :else
           `(bind ~val (fn [~var] (for-m ~exprs ~expr))))))
-
-(defmacro do-m [expr & exprs]
-  (or
-   (cond (empty? exprs) expr
-         (seq? expr)
-         (let [[key var val] expr]
-           (condp = key
-             'let! `(bind ~val (fn [~var] (do-m ~@exprs)))
-             'let `(let [~var ~val] (do-m ~@exprs)))))
-   `(bind' ~expr (do-m ~@exprs))))

@@ -9,7 +9,6 @@ Protocol based Monad library
 ### for-m
 
 ```clojure
-(require '[emerald.monad :as m])
 (require '[emerald.syntax :refer [for-m]])
 
 ;; List Monad
@@ -20,7 +19,16 @@ Protocol based Monad library
        [a b])
 
 ;; Identity and Maybe
-(do-m (let! a ([1 2 3] 0))
-      (let! b ({:foo 2 :bar 3} :baz))
-      (+ a b))
+(for-m [a ([1 2 3] 0)
+        b ({:foo 2 :bar 3} :baz)]
+       (+ a b))
+```
+
+### >>=
+
+```clojure
+(require '[emerald.monad :refer [>>=]])
+
+(>>= '(1 2 3) (partial repeat 2))
+(>>= 0 inc inc (fn [x] (* x x)))
 ```
